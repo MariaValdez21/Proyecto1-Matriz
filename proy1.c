@@ -4,14 +4,14 @@
 
 typedef struct Node{
 	int value;
-	unsigned int cord;
+	unsigned int cordX;
 	struct Node *next;
 	struct Node *last;
 } node;
 
 typedef struct Matriz{
 	node *list;
-	unsigned int cordX;
+	unsigned int cordY;
 	struct Matriz *next;
 	struct Matriz *last;
 } matriz;

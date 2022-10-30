@@ -3,14 +3,14 @@
 // Estructura de la matriz
 typedef struct Node{
         int value;
-	unsigned int cordY;
+	unsigned int cordX;
         struct node *next;
         struct node *last;
 } node;
 
 typedef struct Matriz{
         node *list;
-        unsigned int cordX;
+        unsigned int cordY;
         struct Matriz *next;
         struct Matriz *last;
 } matriz;
