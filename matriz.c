@@ -22,7 +22,7 @@ int ObtenerElemento(unsigned int i, unsigned int j, matriz *M){
 		return -1;
 	while (M->nextY && M->cordY < j) // Mover puntero por columna
 		M = M->nextY;
-	while (M->list->nextX && M->list->cordX > i) // Mover punetro por fila
+	while (M->list->nextX && M->list->cordX < i) // Mover punetro por fila
 		M->list = M->list->nextX;
 	if (M->cordY == j && M->list->cordX == i)
 		return M->list->value;
@@ -30,10 +30,16 @@ int ObtenerElemento(unsigned int i, unsigned int j, matriz *M){
 }
 
 /* Asigna x al elemento de la fila i y la columna j de la matriz M */
-matriz *AsignarElemento(unsigned int i, unsigned int j, int x, matriz *M){
+matriz *AsignarElemento(unsigned int i, unsigned int j, int x, matriz *M, unsigned int size_x, unsigned int size_y){
 	matriz *p = NULL;
 	node *q = NULL;
 	matriz *qp = NULL;
+
+	// Validar tamano
+	if (i > size_x || j > size_y){
+		printf("Coordenada fuera de la matriz\n");
+		exit(1);
+	}
 
 	// Crear nuevo nodo
 	if((q = (node *)malloc(sizeof(node))) == NULL){
@@ -62,6 +68,7 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, int x, matriz *M){
 	
 	// Insertar nuevo nodo en la columna
 	if (p->cordY < j){
+		qp->nextY = p->next;
 		p->nextY = qp;
 		return M;
 	}
@@ -108,31 +115,35 @@ matriz Transponer(M){
 }
 
 /* Muestra la matriz M */
-void Imprimir(matriz *M){
+void Imprimir(matriz *M, unsigned int size_x, unsigned int size_y){
 	int i = 1, j = 1, k = 0;
 
-	while (M){
-		while (M->list){
-			printf("%d", ObtenerElemento(i, j, M));
-			M->list = M->list->nextX;
-			i++;
-		}
-		j++;
-		M = M->nextY;
+	for (j = 1; j <= size_y; j++){
+		for (i = 1; i <= size_x; i++)
+			printf("%d ", ObtenerElemento(i, j, M));
 		printf("\n");
 	}
+
 }
 
 void main(){
         matriz *A = NULL, *B = NULL, *C = NULL;
-        int i;
+	unsigned int size_x = 5, size_y = 5;
 
-	A = AsignarElemento(1, 1, 1, A);
+	A = AsignarElemento(1, 1, 1, A, size_x, size_y);
 	printf("numero: %d\n\n", ObtenerElemento(1, 1, A));
-	A = AsignarElemento(2, 2, 2, A);
+	
+	A = AsignarElemento(2, 3, 2, A, size_x, size_y);
         printf("numero: %d\n\n", ObtenerElemento(2, 2, A));
-	A = AsignarElemento(3, 3, 3, A);
+	
+	A = AsignarElemento(3, 2, 3, A, size_x, size_y);
         printf("numero: %d\n\n", ObtenerElemento(3, 3, A));
-	printf("numero: %d\n\n", ObtenerElemento(1, 3, A));
-        Imprimir(A);
+	
+	A = AsignarElemento(1, 2, 4, A, size_x, size_y);
+	printf("numero: %d\n\n", ObtenerElemento(1, 2, A));
+	
+	A = AsignarElemento(3, 1, 5, A, size_x, size_y);
+        printf("numero: %d\n\n", ObtenerElemento(1, 3, A));
+        
+	Imprimir(A, size_x, size_y);
 }
