@@ -5,7 +5,7 @@
 
 // Estructura de la matriz
 typedef struct Node{
-	int value;
+	float value;
 	unsigned int cordX;
 	struct Node *nextX;
 } node;
@@ -17,7 +17,7 @@ typedef struct Matriz{
 } matriz;
 
 /* Devuelve el elemento de la fila i y la columna j de la matriz M */
-int ObtenerElemento(unsigned int i, unsigned int j, matriz *M){
+float ObtenerElemento(unsigned int i, unsigned int j, matriz *M){
 	if (!M)
 		return -1;
 	while (M->nextY && M->cordY < j) // Mover puntero por columna
@@ -30,10 +30,9 @@ int ObtenerElemento(unsigned int i, unsigned int j, matriz *M){
 }
 
 /* Asigna x al elemento de la fila i y la columna j de la matriz M */
-matriz *AsignarElemento(unsigned int i, unsigned int j, int x, matriz *M, unsigned int size_x, unsigned int size_y){
-	matriz *p = NULL;
-	node *q = NULL;
-	matriz *qp = NULL;
+matriz *AsignarElemento(unsigned int i, unsigned int j, float x, matriz *M, unsigned int size_x, unsigned int size_y){
+	matriz *p = NULL, *qp = NULL, *prevY = NULL;
+	node *q = NULL, *prevX = NULL;
 
 	// Validar tamano
 	if (i > size_x || j > size_y){
@@ -42,7 +41,7 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, int x, matriz *M, unsign
 	}
 
 	// Crear nuevo nodo
-	if((q = (node *)malloc(sizeof(node))) == NULL){
+	if ((q = (node *)malloc(sizeof(node))) == NULL){
 		printf("q: error en malloc\n");
 		exit(1);
 	}
@@ -50,7 +49,7 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, int x, matriz *M, unsign
 	q->cordX = i;
 	q->nextX = NULL;
 	
-	if((qp = (matriz *)malloc(sizeof(matriz))) == NULL){
+	if ((qp = (matriz *)malloc(sizeof(matriz))) == NULL){
 		printf("qp: error en malloc\n");
 		exit(1);
 	}
@@ -62,56 +61,135 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, int x, matriz *M, unsign
 	if (!M)
 		return qp;
 	p = M;
+
 	// Mover puntero por columna
-	while (p->cordY < j && p->nextY)
+	while (p->nextY && p->cordY < j){
+		prevY = p;
 		p = p->nextY;
-	
-	// Insertar nuevo nodo en la columna
-	if (p->cordY < j){
-		qp->nextY = p->next;
+	}
+	// Insertar nodo en columna
+	if (p->cordY != j){
+		qp->nextY = p->nextY;
+		if (!prevY)
+			return M;
 		p->nextY = qp;
 		return M;
 	}
-	
+
+	free(qp);
 	// Mover puntero por fila
-	while (p->list->cordX < i && p->list->nextX)
+	while (p->list && p->list->cordX < i){
 		p->list = p->list->nextX;
-	
-	//Insertar nuevo elemento en un nodo existente
-	if (p->list->cordX == i && p->cordY == j){
-		free(q);
-		free(qp);
-		p->list->value = x;
+		prevX = p->list;
 	}
-	//Insertar nuevo nodo en la fila
-	else{
-		qp->list->nextX = p->list->nextX;
-		p->list->nextX = qp->list;
+	// Insertar nodo en fila
+	if (p->list->cordX != i){
+		q->nextX = p->list;
+		if (!prevX)
+			return M;
+		prevX->nextX = q;
+	return M;
 	}
+	free(q);
+	p->list->value = x;
 	return M;
 }
 
 /* Devuelve la matriz resultante de sumar M1 y M2, las matrices M1 y M2 deben tener la misma dimensión. */
-matriz Sumar(M1, M2){
-	;
+matriz *Sumar(matriz *M1, matriz *M2, unsigned int size_x1, unsigned int size_y1, unsigned int size_x2, unsigned int size_y2){
+	matriz *p = NULL;
+
+	if (size_x1 != size_x2 || size_y1 != size_y2){
+		printf("Las matrices M1 y M2 no tienen la misma dimensión\n");
+		exit(1);
+	}
+
+	while (M1 || M2){
+		while (M1->list || M2->list){
+			//Sumar elementos
+			if (M1->list->cordX == M2->list->cordX && M1->cordY == M2->cordY)
+				p = AsignarElemento(M1->list->cordX, M1->cordY, M1->list->value + M2->list->value, p, size_x1, size_y1);
+			else {
+				if (M1->list)
+					p = AsignarElemento(M1->list->cordX, M1->cordY, M1->list->value, p, size_x1, size_y1);
+				if (M2->list)
+					p = AsignarElemento(M2->list->cordX, M2->cordY, M2->list->value, p, size_x1, size_y1);
+			}
+			if (M1->list)
+				M1->list = M1->list->nextX;
+			if (M2->list)
+				M2->list = M2->list->nextX;
+		}
+		if (M1)
+			M1 = M1->nextY;
+		if (M2)
+			M2 = M2->nextY;
+	}
+	return p;
 }
 
 /* Devuelve la matriz resultante de multiplicar M1 por el escalar e */
-matriz ProductoPorEscalar(e, M){
-	;
+matriz *ProductoPorEscalar(float e, matriz *M){
+	matriz *p = M;
+	
+	while (p){ // Mover puntero por columna
+		while (p->list){ // Mover punetro por fila
+			p->list->value *= e;
+			p->list = p->list->nextX;
+		}
+		p = p->nextY;
+	}
+	return M;
+}
+
+//* Devuelve la transpuesta de M */
+matriz *Transponer(matriz *M, unsigned int size_x, unsigned int size_y){
+	matriz *p = M, *q = NULL;
+
+	//Mover puntero por fila cabecera
+	while (p){
+		//Mover puntero por columna
+		while (p->list){
+			q = AsignarElemento(p->cordY, p->list->cordX, p->list->value, q, size_y, size_x);
+			p->list = p->list->nextX;
+		}
+		p = p->nextY;
+	}
+	return q;
 }
 
 /* Devuelve la matriz resultante de multiplicar M1 y M2, 
  * el número de columnas de M1 debe ser igual al número de filas de M2. 
  * La matriz resultante tiene el mismo número de filas de M1 y 
  * el mismo número de columnas de M2. */
-matriz Producto(M1, M2){
-	;
-}
+matriz *Producto(matriz *M1, matriz *M2, unsigned int size_x1, unsigned int size_y1, unsigned int size_x2, unsigned int size_y2){
+	matriz *p = NULL, *q = NULL, *r = NULL;
+	int i, j;
+	float h = 0;
 
-/* Devuelve la transpuesta de M */
-matriz Transponer(M){
-	;
+	if (size_x1 != size_y2){
+		printf("El número de columnas de M1 no es igual al número de filas de M2\n");
+		exit(1);
+	}
+	
+	M2 = Transponer(M2, size_x2, size_y2);
+	for (j = 1; M1; j++){
+		q = r = M2;
+		for (i = 1; q->list; i++){
+			while (q){
+				while (q->list){
+					h += M1->list->value * q->list->value;
+					q->list = q->list->nextX;
+				}
+				// Multiplicar elementos
+				p = AsignarElemento(i, j, h, p, size_x1, size_y1);
+				M1->list = M1->list->nextX;
+			}
+			q = r->nextY;
+		}
+		M1 = M1->nextY;
+	}
+	return p;
 }
 
 /* Muestra la matriz M */
@@ -120,30 +198,8 @@ void Imprimir(matriz *M, unsigned int size_x, unsigned int size_y){
 
 	for (j = 1; j <= size_y; j++){
 		for (i = 1; i <= size_x; i++)
-			printf("%d ", ObtenerElemento(i, j, M));
+			printf("%f0.2 ", ObtenerElemento(i, j, M));
 		printf("\n");
 	}
-
-}
-
-void main(){
-        matriz *A = NULL, *B = NULL, *C = NULL;
-	unsigned int size_x = 5, size_y = 5;
-
-	A = AsignarElemento(1, 1, 1, A, size_x, size_y);
-	printf("numero: %d\n\n", ObtenerElemento(1, 1, A));
-	
-	A = AsignarElemento(2, 3, 2, A, size_x, size_y);
-        printf("numero: %d\n\n", ObtenerElemento(2, 2, A));
-	
-	A = AsignarElemento(3, 2, 3, A, size_x, size_y);
-        printf("numero: %d\n\n", ObtenerElemento(3, 3, A));
-	
-	A = AsignarElemento(1, 2, 4, A, size_x, size_y);
-	printf("numero: %d\n\n", ObtenerElemento(1, 2, A));
-	
-	A = AsignarElemento(3, 1, 5, A, size_x, size_y);
-        printf("numero: %d\n\n", ObtenerElemento(1, 3, A));
-        
-	Imprimir(A, size_x, size_y);
+	printf("\n");
 }
