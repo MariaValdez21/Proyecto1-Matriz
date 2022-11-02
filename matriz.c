@@ -18,14 +18,16 @@ typedef struct Matriz{
 
 /* Devuelve el elemento de la fila i y la columna j de la matriz M */
 float ObtenerElemento(unsigned int i, unsigned int j, matriz *M){
+	node *p = NULL;
 	if (!M)
 		return -1;
 	while (M->nextY && M->cordY < j) // Mover puntero por columna
 		M = M->nextY;
-	while (M->list->nextX && M->list->cordX < i) // Mover punetro por fila
-		M->list = M->list->nextX;
-	if (M->cordY == j && M->list->cordX == i)
-		return M->list->value;
+	p = M->list;
+	while (p->nextX && p->cordX < i) // Mover punetro por fila
+		p = p->nextX;
+	if (M->cordY == j && p->cordX == i)
+		return p->value;
 	return 0;
 }
 
@@ -62,13 +64,21 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, float x, matriz *M, unsi
 		return qp;
 	p = M;
 
+	// Si cordenada es mayor a j
+	if (p->cordY > j){
+		qp->nextY = M;
+		M = qp;
+		return M;
+	}
+
+	prevY = p;
 	// Mover puntero por columna
 	while (p->nextY && p->cordY < j){
-		prevY = p;
 		p = p->nextY;
+		prevY = p;
 	}
 	// Insertar nodo en columna
-	if (p->cordY != j){
+	if (p->cordY > j){
 		qp->nextY = p->nextY;
 		if (!prevY)
 			return M;
@@ -77,21 +87,25 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, float x, matriz *M, unsi
 	}
 
 	free(qp);
+	// Si coordenada es mayor a i
+	if (p->list->cordX > i){
+		q->nextX = p->list;
+		p->list = q;
+		return M;
+	}
 	// Mover puntero por fila
-	while (p->list && p->list->cordX < i){
-		p->list = p->list->nextX;
-		prevX = p->list;
+	prevX = p->list;
+	while (prevX->nextX && prevX->nextX->cordX < i)
+		prevX = prevX->nextX;
+	if (prevX->cordX == i){
+		free(q);
+		p->list->value = x;
+		return M;
 	}
 	// Insertar nodo en fila
-	if (p->list->cordX != i){
-		q->nextX = p->list;
-		if (!prevX)
-			return M;
-		prevX->nextX = q;
-	return M;
-	}
-	free(q);
-	p->list->value = x;
+	q->nextX = prevX->nextX;
+	prevX->nextX = q;
+	printf("added to list\n");
 	return M;
 }
 
