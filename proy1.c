@@ -2,19 +2,7 @@
 #include <stdio.h>
 #include "matriz.h"
 
-/*typedef struct Node{
-	float value;
-	unsigned int cordX;
-	struct Node *next;
-} node;
-
-typedef struct Matriz{
-	node *list;
-	unsigned int cordY;
-	struct Matriz *next;
-} matriz;*/
-
-void main(){
+int main(){
 	matriz *A = NULL, *B = NULL, *C = NULL, *D = NULL, *E = NULL, *F = NULL;
 	unsigned int size_x1 = 5, size_y1 = 5, size_x2 = 5, size_y2 = 5;
 
@@ -24,10 +12,10 @@ void main(){
 	A = AsignarElemento(2, 3, 4, A, size_x1, size_y1);
 
 	A = AsignarElemento(2, 2, 5, A, size_x2, size_y2);
-        A = AsignarElemento(3, 1, 6, A, size_x2, size_y2);
-        A = AsignarElemento(3, 2, 7, A, size_x2, size_y2);
-        A = AsignarElemento(2, 3, 8, A, size_x2, size_y2);
-	
+	A = AsignarElemento(3, 1, 6, A, size_x2, size_y2);
+	A = AsignarElemento(3, 2, 7, A, size_x2, size_y2);
+	A = AsignarElemento(2, 3, 8, A, size_x2, size_y2);
+
 	printf("Numero: %.2f\n\n", ObtenerElemento(2, 1, A));
 	printf("Numero: %.2f\n\n", ObtenerElemento(2, 1, B));
 
@@ -42,4 +30,6 @@ void main(){
 	Imprimir(D, size_x1, size_y1);
 	Imprimir(E, size_x1, size_y1);
 	Imprimir(F, size_y1, size_x1);
+
+	return 0;
 }

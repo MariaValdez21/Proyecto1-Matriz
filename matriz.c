@@ -19,6 +19,7 @@ typedef struct Matriz{
 /* Devuelve el elemento de la fila i y la columna j de la matriz M */
 float ObtenerElemento(unsigned int i, unsigned int j, matriz *M){
 	node *p = NULL;
+
 	if (!M)
 		return -1;
 	while (M->nextY && M->cordY < j) // Mover puntero por columna
@@ -62,8 +63,8 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, float x, matriz *M, unsi
 	// Si matriz no existe
 	if (!M)
 		return qp;
-	p = M;
 
+	p = M;
 	// Si cordenada es mayor a j
 	if (p->cordY > j){
 		qp->nextY = M;
@@ -105,47 +106,47 @@ matriz *AsignarElemento(unsigned int i, unsigned int j, float x, matriz *M, unsi
 	// Insertar nodo en fila
 	q->nextX = prevX->nextX;
 	prevX->nextX = q;
-	printf("added to list\n");
 	return M;
 }
 
 /* Devuelve la matriz resultante de sumar M1 y M2, las matrices M1 y M2 deben tener la misma dimensión. */
 matriz *Sumar(matriz *M1, matriz *M2, unsigned int size_x1, unsigned int size_y1, unsigned int size_x2, unsigned int size_y2){
-	matriz *p = NULL;
+	matriz *p1 = M1, *p2 = M2, *qp = NULL;
+	node *q1 = M1->list , *q2 = M2->list;
 
 	if (size_x1 != size_x2 || size_y1 != size_y2){
 		printf("Las matrices M1 y M2 no tienen la misma dimensión\n");
 		exit(1);
 	}
 
-	while (M1 || M2){
-		while (M1->list || M2->list){
+	while (p1 || p2){
+		while (q1 || q2){
 			//Sumar elementos
-			if (M1->list->cordX == M2->list->cordX && M1->cordY == M2->cordY)
-				p = AsignarElemento(M1->list->cordX, M1->cordY, M1->list->value + M2->list->value, p, size_x1, size_y1);
+			if (q1->cordX == q2->cordX && p1->cordY == p2->cordY)
+				qp = AsignarElemento(q1->cordX, p1->cordY, q1->value + q2->value, qp, size_x1, size_y1);
 			else {
-				if (M1->list)
-					p = AsignarElemento(M1->list->cordX, M1->cordY, M1->list->value, p, size_x1, size_y1);
-				if (M2->list)
-					p = AsignarElemento(M2->list->cordX, M2->cordY, M2->list->value, p, size_x1, size_y1);
+				if (p1)
+					qp = AsignarElemento(q1->cordX, p1->cordY, q1->value, qp, size_x1, size_y1);
+				if (p2)
+					qp = AsignarElemento(q2->cordX, p2->cordY, q2->value, qp, size_x1, size_y1);
 			}
-			if (M1->list)
-				M1->list = M1->list->nextX;
-			if (M2->list)
-				M2->list = M2->list->nextX;
+			if (q1)
+				q1 = q1->nextX;
+			if (q2)
+				q2 = q2->nextX;
 		}
-		if (M1)
-			M1 = M1->nextY;
-		if (M2)
-			M2 = M2->nextY;
+		if (p1)
+			p1 = p1->nextY;
+		if (p2)
+			p2 = p2->nextY;
 	}
-	return p;
+	return qp;
 }
 
 /* Devuelve la matriz resultante de multiplicar M1 por el escalar e */
 matriz *ProductoPorEscalar(float e, matriz *M){
 	matriz *p = M;
-	
+
 	while (p){ // Mover puntero por columna
 		while (p->list){ // Mover punetro por fila
 			p->list->value *= e;
@@ -158,18 +159,20 @@ matriz *ProductoPorEscalar(float e, matriz *M){
 
 //* Devuelve la transpuesta de M */
 matriz *Transponer(matriz *M, unsigned int size_x, unsigned int size_y){
-	matriz *p = M, *q = NULL;
+	matriz *p = M, *qp = NULL;
+	node *q = NULL;
 
 	//Mover puntero por fila cabecera
 	while (p){
+		q = p->list;
 		//Mover puntero por columna
-		while (p->list){
-			q = AsignarElemento(p->cordY, p->list->cordX, p->list->value, q, size_y, size_x);
-			p->list = p->list->nextX;
+		while (q){
+			qp = AsignarElemento(p->cordY, q->cordX, q->value, qp, size_y, size_x);
+			q = q->nextX;
 		}
 		p = p->nextY;
 	}
-	return q;
+	return qp;
 }
 
 /* Devuelve la matriz resultante de multiplicar M1 y M2, 
@@ -177,8 +180,9 @@ matriz *Transponer(matriz *M, unsigned int size_x, unsigned int size_y){
  * La matriz resultante tiene el mismo número de filas de M1 y 
  * el mismo número de columnas de M2. */
 matriz *Producto(matriz *M1, matriz *M2, unsigned int size_x1, unsigned int size_y1, unsigned int size_x2, unsigned int size_y2){
-	matriz *p = NULL, *q = NULL, *r = NULL;
-	int i, j;
+	matriz *p1 = M1, *p2 = NULL, *qp = NULL,  *r = NULL;
+	node *q1 = NULL, *q2 = NULL;
+	int i = 1, j = 1;
 	float h = 0;
 
 	if (size_x1 != size_y2){
@@ -186,29 +190,30 @@ matriz *Producto(matriz *M1, matriz *M2, unsigned int size_x1, unsigned int size
 		exit(1);
 	}
 	
-	M2 = Transponer(M2, size_x2, size_y2);
-	for (j = 1; M1; j++){
-		q = r = M2;
-		for (i = 1; q->list; i++){
-			while (q){
-				while (q->list){
-					h += M1->list->value * q->list->value;
-					q->list = q->list->nextX;
+	p2 = Transponer(M2, size_x2, size_y2);
+	while (p1){
+		r = p2;
+		for (i = 1; q2; i++){
+			while (r){
+				while (q2){
+					h += q1->value * q2->value;
+					q2 = q2->nextX;
 				}
 				// Multiplicar elementos
-				p = AsignarElemento(i, j, h, p, size_x1, size_y1);
-				M1->list = M1->list->nextX;
+				qp = AsignarElemento(i, j, h, qp, size_x1, size_y1);
+				q1 = q1->nextX;
 			}
-			q = r->nextY;
+			r = r->nextY;
+			q2 = r->list;
 		}
-		M1 = M1->nextY;
+		p1 = p1->nextY;
 	}
-	return p;
+	return qp;
 }
 
 /* Muestra la matriz M */
 void Imprimir(matriz *M, unsigned int size_x, unsigned int size_y){
-	int i = 1, j = 1, k = 0;
+	int i = 1, j = 1;
 
 	for (j = 1; j <= size_y; j++){
 		for (i = 1; i <= size_x; i++)
